@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 from dotenv import load_dotenv
+import certifi
 import os
 from typing import Optional
 
@@ -20,7 +21,8 @@ async def connect_to_mongo():
         database.client = AsyncIOMotorClient(
             MONGODB_URL,
             serverSelectionTimeoutMS=10000,
-            connectTimeoutMS=10000
+            connectTimeoutMS=10000,
+            tlsCAFile=certifi.where()
         )
         # Test connection
         await database.client.admin.command('ping')
@@ -48,7 +50,7 @@ async def connect_to_mongo():
         
     except Exception as e:
         print(f"MongoDB connection failed: {str(e)}")
-        raise
+        database.client = None
 
 async def close_mongo_connection():
     if database.client:
@@ -65,7 +67,7 @@ sync_client = None
 sync_db = None
 if MONGODB_URL:
     try:
-        sync_client = MongoClient(MONGODB_URL)
+        sync_client = MongoClient(MONGODB_URL, tlsCAFile=certifi.where())
         sync_db = sync_client[DATABASE_NAME]
     except Exception as e:
         print(f"Warning: Failed to create sync MongoDB client: {str(e)}")
